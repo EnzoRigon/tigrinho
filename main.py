@@ -3,6 +3,9 @@ import db_handler as db
 import pandas as pd
 from slots import play_slots, spin_slots
 import time
+from streamlit_cookies_controller import CookieController
+
+cookie_controller = CookieController()
 
 @st.dialog("Adicione ou acesse seu usuário")
 def get_user():
@@ -12,12 +15,19 @@ def get_user():
         user, balance = db.check_or_add_user(user)
         st.session_state.user = user
         st.session_state.balance = balance
+        cookie_controller.set("user", user)
         st.rerun()
 
+cookies_user = cookie_controller.get("user")
 
-if 'user' not in st.session_state:
+if cookies_user is None:
     get_user()
 else:
+    if 'balance' not in st.session_state:
+        st.session_state.user = cookies_user
+        balance = db.get_balance(cookies_user)
+        st.session_state.balance = balance
+
     st.title('Enzas Bet 🐯')
     st.subheader(f"Usuário: {st.session_state.user}")
 
@@ -67,6 +77,8 @@ else:
     df_rank = pd.DataFrame(ranking, columns=['Usuário', 'Saldo'])
     st.dataframe(df_rank)
 
-# TODO:
-# - Adicionar Animação Rotação
-# - Adicionar persistencia de usuario
+    if st.button("Sair"):
+        for key in st.session_state.keys():
+            del st.session_state[key]
+        cookie_controller.remove('user')
+        st.rerun()

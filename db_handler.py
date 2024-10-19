@@ -61,3 +61,18 @@ def get_ranking():
 
     conn.close()
     return results
+
+
+def get_balance(user):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT balance FROM people WHERE user = ?', (user,))
+    result = cursor.fetchone()
+
+    conn.close()
+
+    if result:
+        return result[0]
+    else:
+        return None
